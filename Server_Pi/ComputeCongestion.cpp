@@ -47,7 +47,7 @@ float lane3Y[4] = {};
   ---------------------- 
 */
 
-void loadFile(string fileName);
+void loadFile(char* fileName);
 void averageSpeed(vector<double> speed, vector<double> time, vector<double> avg);
 void congestion(vector<double> v); 
 void pause(int dur); 
@@ -71,36 +71,45 @@ void clearScreen();
 
   
 int main() {
-  
+  //wait for all 3 cars to send data
   int a;
   while(1){
     a = 0;
     while(a < 2){
       struct stat st;
-      if(stat("./text1.txt",&st) == 0)
+      if(stat("./car1.txt",&st) == 0)
 	a = 2;
     }
     a = 0;
     while(a < 2){
       struct stat st;
-      if(stat("./text2.txt",&st) == 0)
-	a = 2;
+      if(stat("./car2.txt",&st) == 0)
+		a = 2;
+    }
+	 a = 0;
+    while(a < 2){
+      struct stat st;
+      if(stat("./car3.txt",&st) == 0)
+		a = 2;
     }
     pause(2);
-    loadFile("text1.txt");
+    loadFile("car1.txt");
     pause(2);
     clearScreen();
-    loadFile("text2.txt");
+    loadFile("car2.txt");
+    pause(2);
+    clearScreen();
+	loadFile("car3.txt");
     pause(2);
     clearScreen();
     //averageSpeed();
     //congestion();
-    system("./fileTransfer.sh");
-    system("./fileTransfer1.sh");
-    system("rm Congestion.txt");
-    system("rm text1.txt");
-    system("rm text2.txt");
-    lane1.clear();
+
+	averageSpeed(Lane1, Lane1T, Lane1AVG);
+	averageSpeed(Lane2, Lane2T, Lane2AVG);
+	averageSpeed(Lane3, Lane3T, Lane3AVG);
+    Congestion(Lane1AVG);
+	lane1.clear();
     lane1T.clear();
     lane2.clear();
     lane2T.clear();
@@ -109,6 +118,13 @@ int main() {
     lane1AVG.clear();
     lane2AVG.clear();
     lane3AVG.clear();
+	system("./fileTransfer.sh"); //inital test only send data to one car
+    system("./fileTransfer1.sh");
+	system("./fileTransfer2.sh");
+    system("rm Congestion.txt");
+    system("rm car1.txt");
+    system("rm car2.txt");
+	system("rm car3.txt");
     
   }
   return 0;
@@ -120,33 +136,31 @@ int main() {
   
   ------------------------------------------------------------------------ 
 */ 
-void loadFile(string fileName){
+void loadFile(char* fileName){
   cout << "loading file " << endl;
   string str;
-  ifstream infile;
-  infile.open(fileName.c_str());
+  ifstream infile(fileName);
+  //infile.open(fileName.c_str());
   if(!infile.is_open())
     {
       cout << "ERROR loading file \n";
       cout << endl << endl << endl;
       return;
     }
+  float lat;
+  float lon;
+  double s;
+  double t;
   while(!infile.eof())
     {
-      getline(infile,str);
-      float lat;
-      float lon;
-      double s;
-      double t;
-      istringstream ss(str);
-      ss >> lat >> lon >> s >> t;
+      infile >> lat >> lon >> s >> t;
       if(pointInPolygon(lat, lon, lane1X, lane1Y) == true){
-	lane1.push_back(s);
-	lane1T.push_back(t);
+		lane1.push_back(s);
+		lane1T.push_back(t);
       }
       if(pointInPolygon(lat, lon, lane2X, lane2Y) == true){
-	lane2.push_back(s);
-	lane2T.push_back(t);
+		lane2.push_back(s);
+		lane2T.push_back(t);
       }
 	  if(pointInPolygon(lat, lon, lane3X, lane3Y) == true){
 	    lane3.push_back(s);
@@ -171,15 +185,14 @@ void averageSpeed(vector<double> speed, vector<double> time, vector<double> avg)
     {
       count = 0;
       average = 0;
-      for(int j =0; j < time.size(); j++)
-	{
-	  if(time[j] == k){
-	    count++;
-	    average += speed[j];
+      for(int j =0; j < time.size(); j++){
+		if(time[j] == k){
+			count++;
+			average += speed[j];
+		}
 	  }
-	}
       if(count > 1)
-	avg.push_back(average/count);
+		avg.push_back(average/count);
     }
   
 }
